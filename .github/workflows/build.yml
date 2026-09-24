@@ -1,0 +1,30 @@
+name: Compilar plugin
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Compilar
+        run: cmake --build build --config Release --parallel
+
+      - name: Guardar VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrismaEQ-Windows-VST3
+          path: build/PrismaEQ_artefacts/Release/VST3/
+
+      - name: Guardar version independiente
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrismaEQ-Windows-Standalone
+          path: build/PrismaEQ_artefacts/Release/Standalone/
