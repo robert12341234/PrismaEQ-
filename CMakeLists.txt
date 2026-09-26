@@ -24,11 +24,12 @@ juce_add_plugin(PrismaEQ
     COPY_PLUGIN_AFTER_BUILD FALSE)
 
 target_sources(PrismaEQ PRIVATE
-    Source/DSP.h
-    Source/PluginProcessor.cpp
-    Source/PluginProcessor.h
-    Source/PluginEditor.cpp
-    Source/PluginEditor.h)
+    DSP.h
+    Presets.h
+    PluginProcessor.cpp
+    PluginProcessor.h
+    PluginEditor.cpp
+    PluginEditor.h)
 
 target_compile_definitions(PrismaEQ PUBLIC
     JUCE_WEB_BROWSER=0
