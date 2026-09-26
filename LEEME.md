@@ -32,3 +32,18 @@ En el repositorio pulsa "Add file" > "Create new file", escribe el nombre `.gith
 - Espectro en vivo de fondo, medidores L/R de entrada (IN) y salida (OUT).
 - Auto gain: compensa la ganancia de salida para igualar el nivel de entrada. Con el activado, el control de Salida se vuelve automatico.
 - La ventana se puede redimensionar.
+
+## Novedades de esta version
+
+- 21 presets de fabrica, agrupados por categoria (guitarra electrica, guitarra
+  acustica, voz femenina, voz masculina, bateria, bajo, piano, metales) en el
+  desplegable de arriba de los controles.
+- Botones Guardar y Cargar: guardan o abren un preset propio como archivo
+  .prismaeq (dialogo normal de Windows para elegir carpeta).
+- Botones A / B: guardan dos versiones del ajuste actual y permiten comparar
+  entre ellas con un clic.
+- Doble clic en un hueco vacio de la pantalla activa una banda libre ahi mismo
+  (agrega un punto de EQ nuevo). Como son 6 bandas, el limite es 6 puntos a la
+  vez; doble clic en un punto ya puesto sigue reseteando su ganancia a 0.
+- Medidores de nivel (IN y OUT) en verde mas claro y luminoso, que pasa a
+  amarillo intenso cerca de 0 dB y a rojo si se pasa.
