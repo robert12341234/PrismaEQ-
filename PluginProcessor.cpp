@@ -26,10 +26,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout PrismaEQAudioProcessor::crea
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    const float defFreq[prisma::numBands] = { 60.0f, 200.0f, 800.0f, 2500.0f, 6000.0f, 12000.0f };
-    const float defQ[prisma::numBands]    = { 0.7f, 1.0f, 1.0f, 1.0f, 1.0f, 0.7f };
+    // Las primeras 6 son las bandas clasicas del plugin, ya activas. Las bandas
+    // 7 a 10 arrancan apagadas: son puntos libres para que el usuario agregue
+    // con doble clic, repartidas por el espectro.
+    const float defFreq[prisma::numBands] = { 60.0f, 200.0f, 800.0f, 2500.0f, 6000.0f, 12000.0f,
+                                              400.0f, 1500.0f, 4000.0f, 9000.0f };
+    const float defQ[prisma::numBands]    = { 0.7f, 1.0f, 1.0f, 1.0f, 1.0f, 0.7f,
+                                              1.0f, 1.0f, 1.0f, 0.7f };
     const int defType[prisma::numBands]   = { prisma::LowShelf, prisma::Bell, prisma::Bell,
-                                              prisma::Bell, prisma::Bell, prisma::HighShelf };
+                                              prisma::Bell, prisma::Bell, prisma::HighShelf,
+                                              prisma::Bell, prisma::Bell, prisma::Bell, prisma::Bell };
+    const bool defOn[prisma::numBands]    = { true, true, true, true, true, true,
+                                              false, false, false, false };
 
     const juce::StringArray typeNames { "Campana", "Shelf grave", "Shelf agudo", "Paso alto", "Paso bajo" };
 
@@ -79,7 +87,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PrismaEQAudioProcessor::crea
         layout.add (std::make_unique<juce::AudioParameterBool> (
             juce::ParameterID { bandParamId (i, "on"), 1 },
             "Banda " + n + " activa",
-            true));
+            defOn[i]));
     }
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (

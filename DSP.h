@@ -6,7 +6,7 @@
 
 namespace prisma
 {
-    constexpr int numBands = 6;
+    constexpr int numBands = 10;
 
     enum BandType { Bell = 0, LowShelf = 1, HighShelf = 2, HighPass = 3, LowPass = 4 };
 
