@@ -6,7 +6,9 @@ namespace
     const juce::Colour bandColours[prisma::numBands] =
     {
         juce::Colour (0xff7F77DD), juce::Colour (0xff1D9E75), juce::Colour (0xffD85A30),
-        juce::Colour (0xffD4537E), juce::Colour (0xff378ADD), juce::Colour (0xffBA7517)
+        juce::Colour (0xffD4537E), juce::Colour (0xff378ADD), juce::Colour (0xffBA7517),
+        juce::Colour (0xff5EC8D8), juce::Colour (0xffE0A93A), juce::Colour (0xff9A6BD8),
+        juce::Colour (0xffD86B9E)
     };
 
     const juce::Colour colBg      (0xff232322);
@@ -579,7 +581,7 @@ void PrismaEQAudioProcessorEditor::resized()
     auto right = controls;
 
     auto btnRow = left.removeFromTop (34);
-    const int bw = btnRow.getWidth() / 6;
+    const int bw = btnRow.getWidth() / prisma::numBands;
 
     for (int i = 0; i < prisma::numBands; ++i)
         bandButtons[(size_t) i].setBounds (btnRow.removeFromLeft (bw).reduced (2));
@@ -739,15 +741,42 @@ void PrismaEQAudioProcessorEditor::paint (juce::Graphics& g)
         g.drawText (l.text, juce::Rectangle<float> (freqToX (l.f) - 20.0f, bottom + 4.0f, 40.0f, 14.0f),
                     juce::Justification::centred, false);
 
-    // Medidores de entrada (izquierda) y salida (derecha)
+    // Medidores de entrada (izquierda) y salida (derecha): -60 a +6 dB,
+    // verde en la parte baja, amarillo cerca de 0 y rojo si se pasa de 0.
+    constexpr float meterMin = -60.0f, meterMax = 6.0f;
+    constexpr float amberFrom = -9.0f, redFrom = 0.0f;
+
+    auto meterNorm = [] (float db)
+    {
+        return juce::jlimit (0.0f, 1.0f, (db - meterMin) / (meterMax - meterMin));
+    };
+
     auto drawMeter = [&] (juce::Rectangle<float> bar, float db)
     {
         g.setColour (colPanel);
         g.fillRoundedRectangle (bar, 2.0f);
 
-        const float norm = juce::jlimit (0.0f, 1.0f, (db + 60.0f) / 60.0f);
-        g.setColour (db > -1.0f ? colRed : (db > -9.0f ? colAmber : colGreen));
-        g.fillRoundedRectangle (bar.withTop (bar.getBottom() - bar.getHeight() * norm), 2.0f);
+        const float ampStart = meterNorm (amberFrom);
+        const float redStart = meterNorm (redFrom);
+
+        juce::ColourGradient grad;
+        grad.point1 = { bar.getX(), bar.getBottom() };
+        grad.point2 = { bar.getX(), bar.getY() };
+        grad.isRadial = false;
+        grad.addColour (0.0, colGreen);
+        grad.addColour ((double) ampStart, colGreen);
+        grad.addColour (juce::jmin (1.0, (double) ampStart + 0.001), colAmber);
+        grad.addColour ((double) redStart, colAmber);
+        grad.addColour (juce::jmin (1.0, (double) redStart + 0.001), colRed);
+        grad.addColour (1.0, colRed);
+
+        g.setGradientFill (grad);
+        g.fillRoundedRectangle (bar, 2.0f);
+
+        // Tapa (apaga) la parte de arriba que todavia no alcanza el nivel actual
+        const float unlitH = bar.getHeight() * (1.0f - meterNorm (db));
+        g.setColour (colPanel.withAlpha (0.94f));
+        g.fillRoundedRectangle (bar.withHeight (unlitH), 2.0f);
     };
 
     const float meterH = bottom - top;
@@ -759,9 +788,42 @@ void PrismaEQAudioProcessorEditor::paint (juce::Graphics& g)
     drawMeter (juce::Rectangle<float> (rx, top, 4.0f, meterH), outLevel[0]);
     drawMeter (juce::Rectangle<float> (rx + 6.0f, top, 4.0f, meterH), outLevel[1]);
 
+    // Escala numerica junto a cada medidor
+    const struct { float db; const char* text; } meterTicks[] =
+        { { 6.0f, "+6" }, { 3.0f, "+3" }, { 0.0f, "0" }, { -3.0f, "-3" }, { -6.0f, "-6" }, { -12.0f, "-12" },
+          { -24.0f, "-24" }, { -36.0f, "-36" }, { -60.0f, "-60" } };
+
+    g.setFont (8.5f);
     g.setColour (colMuted);
-    g.drawText ("IN", juce::Rectangle<float> (lx - 4.0f, bottom + 4.0f, 20.0f, 14.0f), juce::Justification::centred, false);
-    g.drawText ("OUT", juce::Rectangle<float> (rx - 8.0f, bottom + 4.0f, 30.0f, 14.0f), juce::Justification::centred, false);
+
+    for (auto& t : meterTicks)
+    {
+        const float y = top + meterH * (1.0f - meterNorm (t.db));
+        g.drawText (t.text, juce::Rectangle<float> (lx + 12.0f, y - 5.0f, 26.0f, 10.0f),
+                    juce::Justification::centredLeft, false);
+        g.drawText (t.text, juce::Rectangle<float> (rx - 30.0f, y - 5.0f, 26.0f, 10.0f),
+                    juce::Justification::centredRight, false);
+    }
+
+    auto meterColourFor = [&] (float db)
+    {
+        return db > redFrom ? colRed : (db > amberFrom ? colAmber : colGreen);
+    };
+
+    const float inDb = juce::jmax (inLevel[0], inLevel[1]);
+    const float outDb = juce::jmax (outLevel[0], outLevel[1]);
+
+    g.setFont (11.0f);
+    g.setColour (colMuted);
+    g.drawText ("IN", juce::Rectangle<float> (lx - 4.0f, top - 14.0f, 20.0f, 12.0f), juce::Justification::centred, false);
+    g.drawText ("OUT", juce::Rectangle<float> (rx - 8.0f, top - 14.0f, 30.0f, 12.0f), juce::Justification::centred, false);
+
+    g.setColour (meterColourFor (inDb));
+    g.drawText (juce::String (inDb, 1), juce::Rectangle<float> (lx - 14.0f, bottom + 4.0f, 40.0f, 14.0f),
+                juce::Justification::centred, false);
+    g.setColour (meterColourFor (outDb));
+    g.drawText (juce::String (outDb, 1), juce::Rectangle<float> (rx - 12.0f, bottom + 4.0f, 40.0f, 14.0f),
+                juce::Justification::centred, false);
 
     // Cabecera
     g.setColour (colPink);
