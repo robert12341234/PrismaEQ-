@@ -67,7 +67,7 @@ private:
     std::array<float, (size_t) fftSize / 2> smoothDb {};
     std::vector<float> scratch;
 
-    std::array<juce::TextButton, 6> bandButtons;
+    std::array<juce::TextButton, prisma::numBands> bandButtons;
     juce::ComboBox typeBox;
     juce::ToggleButton bandOn;
     juce::Slider freqKnob, gainKnob, qKnob;
