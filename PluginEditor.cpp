@@ -746,7 +746,7 @@ void PrismaEQAudioProcessorEditor::paint (juce::Graphics& g)
     constexpr float meterMin = -60.0f, meterMax = 6.0f;
     constexpr float amberFrom = -9.0f, redFrom = 0.0f;
 
-    auto meterNorm = [] (float db)
+    auto meterNorm = [ meterMin, meterMax] (float db)
     {
         return juce::jlimit (0.0f, 1.0f, (db - meterMin) / (meterMax - meterMin));
     };
